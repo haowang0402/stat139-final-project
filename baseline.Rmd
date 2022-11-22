@@ -134,3 +134,61 @@ y.pred.plot.lyft = predict(lm.brand, newdata=data.frame(distance=x.plot, cab_typ
 lines(x.plot, y.pred.plot.lyft, col="Magenta", lwd=4)
 ```
 From the prediction line we can see that Lyft has a steeper prediction line, suggesting a significant higher fare rate. However, according to the scatter plots, we can easily find that Uber ride fares have better linearity w.r.t the ride distance, and has a smaller variance in the price.
+
+# Other Explorations
+
+## Downsample Distribution
+Since the original dataset is too big to process in R, we downsample the dataset to a smaller dataset. However, we'd like to make sure the distribution of the smaller dataaset is similar to the original dataset.
+
+![price_percentage](price_percentage.jpg){height=2in} 
+
+![distance_percentage](distance_percentage.jpg){height=2in} 
+
+![source_percentage](source_percentage.jpg){height=2in} 
+
+![dest_percentage](dest_percentage.jpg){height=2in} 
+
+
+![cab_type_percentage](cab_type_percentage.jpg){height=2in} 
+
+![hour_percentage](hour_percentage.jpg){height=2in} 
+
+
+It seems that the downsampling distribution is pretty similar to the original one besides the price distribution, which is a little bit off. We might want to adjust this in the future. 
+
+
+
+## Evaluation of number of orders within the same range
+
+It's intuitive for Uber/Lyft to use supply and demand to price the rides. Therefore, the price of the rides might be much higher if there are a lot of demands. We did some data preprocessing in python by calculating the number of rides within certain time intervals (15 mins here). If there are a lot of rides in the same time range, we expect the price of the rides will be higher. 
+
+```{r, eval = T}
+slide_window_df = read.csv("./data/rides_slide_window.csv")
+hist(slide_window_df$number_of_orders_within_15_mins)
+```
+
+Based on the histogram, it seems that the number of rides is not very continuous. However, we could certainly see that there are certain time ranges (peak hours) with a lot of more rides. Since the value is not very continuous, it might be helpful to convert them into categorical variables based on some time ranges or use a decision tree model in the future. 
+
+```{r, eval = T}
+rideshare$busy = as.factor(
+    ifelse(rideshare$number_of_orders_within_15_mins < 500, 
+            "not busy", 
+            ifelse(rideshare$number_of_orders_within_15_mins < 1000, 
+            "normal", 
+            "busy")))
+```
+
+```{r, eval = T}
+boxplot(rideshare$price ~ rideshare$busy)
+```
+```{r, eval = T}
+summary(aov(rideshare$price ~ rideshare$busy))
+```
+Based on the boxplot and the anova result, there is no significant difference between the price and the number of orders in the same time range. This is counter-intuitive. It might due to the data generation process. The data provider might presample some data to make each hour contains similar amount of orders. Since it does not represent the true distribution, then our calculation might be misleaded. 
+
+```{r, eval = T}
+hist(rideshare$hour)
+```
+
+
+

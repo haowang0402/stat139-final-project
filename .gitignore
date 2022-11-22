@@ -1,3 +1,5 @@
 .DS_Store
-*.csv
+/data/*.csv
 .ipynb_checkpoints/
+baseline_cache/
+baseline_files/
