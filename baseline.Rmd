@@ -165,6 +165,10 @@ t.test(evening_data, midnight_data)
 res.ftest <- aov(price ~ period_of_day, data = rideshare)
 ```
 
+```{r, eval = T}
+res.ftest
+```
+
 # Baseline Model
 
 ## Visualization
@@ -278,13 +282,21 @@ rideshare.train.uber = rideshare.train[rideshare.train$cab_type=="Uber", ]
 rideshare.train.lyft = rideshare.train[rideshare.train$cab_type=="Lyft", ]
 
 # Uber plot
-plot(price ~ distance, data=rideshare.train.uber, col="orange", cex=0.4, pch=8,  xlim=c(0, 8), ylim=c(0, 100), main="Uber")
-y.pred.plot.uber = predict(lm.brand, newdata=data.frame(distance=x.plot, cab_type=rep("Uber", length(x.plot))))
+plot(price ~ distance, data=rideshare.train.uber, col="orange", 
+     cex=0.4, pch=8,  xlim=c(0, 8), ylim=c(0, 100), 
+     main="Uber")
+y.pred.plot.uber = predict(lm.brand, 
+                           newdata=data.frame(distance=x.plot, cab_type=rep("Uber", 
+                          length(x.plot))))
 lines(x.plot, y.pred.plot.uber, col="black", lwd=4)
 
 # Lyft plot
-plot(price ~ distance, data=rideshare.train.lyft, col="pink", cex=0.4, xlim=c(0, 8), ylim=c(0, 100), main="Lyft")
-y.pred.plot.lyft = predict(lm.brand, newdata=data.frame(distance=x.plot, cab_type=rep("Lyft", length(x.plot))))
+plot(price ~ distance, data=rideshare.train.lyft, col="pink", 
+     cex=0.4, 
+     xlim=c(0, 8), 
+     ylim=c(0, 100), main="Lyft")
+y.pred.plot.lyft = predict(lm.brand, 
+                           newdata=data.frame(distance=x.plot, cab_type=rep("Lyft", length(x.plot))))
 lines(x.plot, y.pred.plot.lyft, col="Magenta", lwd=4)
 ```
 From the prediction line we can see that Lyft has a steeper prediction line, suggesting a significant higher fare rate. However, according to the scatter plots, we can easily find that Uber ride fares have better linearity w.r.t the ride distance, and has a smaller variance in the price.
