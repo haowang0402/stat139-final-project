@@ -8,6 +8,37 @@ output: pdf_document
 \newcommand{\Var}{\text{Var}}    
 \newcommand{\Cov}{\text{Cov}}  
 
+# Introduction
+
+## Brief recap about our proppsal
+
+The core question of this project is to identify the pricing model of Uber / Lyft rides, and get an intuition about how to get cheap rides in Boston. The main tools for such analysis is regression.
+
+The dataset used across this project is [Uber and Lyft Dataset Boston, MA](https://www.kaggle.com/datasets/brllrb/uber-and-lyft-dataset-boston-ma). The predictors we selected and cared about for the regression analysis includes:
+
+- Distance of the ride
+- Weather condition, including a categorical variable for the weather, and other statistics like temperature, humidity, visibility, etc.
+- Pick up / Destination location
+- Ride type: Uber or Lyft; more specific information about the vehicle, like Lyft XL, UberX, etc.
+
+The interesting question includes: is Uber cheaper than Lyft or vice versa? What's the pricing model between distance and price? Since the data is around seasonal holidays, do time and location affect the price?
+
+## A preview of what did in this milestone
+
+Specifically, we did the following things:
+
+- Subsampled the original dataset to create a scale that is processible by R, and compared the distribution of predictor variables to confirm that the distributions won't be off the original ones.
+
+- Created visualizations and analysis without modeling to explore how time, location and weather conditions affect the price, and preprocess them in a proper way for future modeling.
+
+- Built several models to perform regression analysis, including linear, polynomial regression using only the distance, and linear regression with interaction terms between distance and ride type (Uber and Lyft). We used these models to analyze the pricing model and try to answer the first two questions.
+
+## What we will do next
+
+We will be focusing on building a predictive model that utilizes all of the predictor variables we cared about. After that, we will try to interpret them with visuals and formal tests, and we will also use cross validation and RMSE metric to properly evaluate the predictive capability of such models.
+
+In the end, we will attempt to answer all the questions we proposed and provide the Bostonians a practical ride suggestion supported by data. 
+
 # Baseline Model
 
 ## Visualization
@@ -112,7 +143,7 @@ lm.brand.test.rmse = RMSE(rideshare.test$price, y.pred.brand.test)
 data.frame(trainRMSE=lm.brand.train.rmse, testRMSE=lm.brand.test.rmse)
 ```
 
-From the summary of the model we can derive some useful insights. When `cab_type` is `Lyft`, the regression formula is $$\text{price} = 10.28 + 3.25\times\text{distance}$$; While if `cab_type` is `Uber`, the regression formula is $$\text{price}=10.33 + 2.51\times distance$$. This suggests that `Lyft` have a slightly lower starting price but would have a significantly higher fare rate w.r.t the distance compared to Uber rides. The pricing model for these two companies are in fact quite different. The $t$-test result supports this claim: the coefficients for `cab_typeUber` is not significant with a $p$-value as big as 0.791, while the coefficients for `distance:cab_typeUber` has a $p$-value less than $2\times 10^{-16}$, indicating extreme significance. So we would have the impression that in Boston during 2018 in the winter, Lyft would be more expensive generally if we are only considering the distance.
+From the summary of the model we can derive some useful insights. When `cab_type` is `Lyft`, the regression formula is $$\text{price} = 10.28 + 3.25\times\text{distance}$$; While if `cab_type` is `Uber`, the regression formula is $$\text{price}=10.33 + 2.51\times \text{distance}$$. This suggests that `Lyft` have a slightly lower starting price but would have a significantly higher fare rate w.r.t the distance compared to Uber rides. The pricing model for these two companies are in fact quite different. The $t$-test result supports this claim: the coefficients for `cab_typeUber` is not significant with a $p$-value as big as 0.791, while the coefficients for `distance:cab_typeUber` has a $p$-value less than $2\times 10^{-16}$, indicating extreme significance. So we would have the impression that in Boston during 2018 in the winter, Lyft would be more expensive generally if we are only considering the distance.
 
 To explore whether this is an improvement compared to the naive linear regression, we perform an $F$-test and calculated the RMSEs. The $p$-value for the $F$-test is less than $2.2\times 10^{-16}$, suggesting a significant improve. Also both train & test RMSEs are better compared to `lm.simple`.
 
