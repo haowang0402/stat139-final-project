@@ -10,7 +10,7 @@ output: pdf_document
 
 # Introduction
 
-## Brief recap about our proppsal
+## Brief recap about our proposal
 
 The core question of this project is to identify the pricing model of Uber / Lyft rides, and get an intuition about how to get cheap rides in Boston. The main tools for such analysis is regression.
 
@@ -44,17 +44,10 @@ In the end, we will attempt to answer all the questions we proposed and provide 
 ## Downsample Distribution
 Since the original dataset is too big to process in R, we downsample the dataset to a smaller dataset. However, we'd like to make sure the distribution of the smaller dataaset is similar to the original dataset.
 
-![price_percentage](price_percentage.jpg){height=2in} 
-
-![distance_percentage](distance_percentage.jpg){height=2in} 
-
+![price_percentage](price_percentage.jpg){height=2in} ![distance_percentage](distance_percentage.jpg){height=2in} 
 ![source_percentage](source_percentage.jpg){height=2in} 
-
 ![dest_percentage](dest_percentage.jpg){height=2in} 
-
-
 ![cab_type_percentage](cab_type_percentage.jpg){height=2in} 
-
 ![hour_percentage](hour_percentage.jpg){height=2in} 
 
 
