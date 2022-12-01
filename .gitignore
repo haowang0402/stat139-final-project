@@ -1,5 +1,8 @@
 .DS_Store
-/data/*.csv
 .ipynb_checkpoints/
 baseline_cache/
 baseline_files/
+.Rhistory
+.localized
+linreg_cache/
+linreg_files

@@ -1,0 +1,104 @@
+---
+title: "Appendix Part II: Data Processing"
+output: pdf_document
+---
+
+# Introduction
+
+In this section, we will try to process the data for further work in predictive modeling.
+
+# Data processing
+
+First we load the downsampled data as is mentioned in Appendix I.
+
+```{r, eval=T}
+# drop rows with price being NA
+rideshare = read.csv("data/sampled_rideshare.csv")
+rideshare = rideshare[is.na(rideshare$price) == F & is.na(rideshare$cab_type) == F, ]
+
+# is there any NA values after we dropped the NAs in price and cab_type?
+sum(is.na(rideshare))
+
+# sample the data to take a peek at the predictors
+head(rideshare)
+
+# number of records
+nrow(rideshare)
+```
+
+Next we process some of the special predictors
+
+```{r, eval=T}
+nsamples = nrow(rideshare)
+
+# day
+rideshare$daycount = rideshare$day
+for(i in 1 : nsamples) {
+  if(rideshare[i, "month"] == "12"){
+    rideshare[i, "daycount"] = rideshare[i, "daycount"] + 30
+  } else {
+    rideshare[i, "daycount"] = rideshare[i, "day"]
+  }
+}
+
+# hour -> time periods
+rideshare$period = rep(NA, nsamples)
+for (i in 1 : nsamples){
+  if ((rideshare$hour[i] > 6) && (rideshare$hour[i] <= 12)) {
+    rideshare$period[i] = "morning"
+  }
+  if ((rideshare$hour[i] > 12) && (rideshare$hour[i] <= 18)) {
+    rideshare$period[i] = "afternoon"
+  }
+  if ((rideshare$hour[i] > 18) && (rideshare$hour[i] <= 23)) {
+    rideshare$period[i] = "evening"
+  }
+  if ((rideshare$hour[i] > 23) || (rideshare$hour[i] <= 6)) {
+    rideshare$period[i] = "midnight"
+  }
+}
+
+# check again for NA values
+sum(is.na(rideshare))
+```
+
+```{r, eval=T}
+# combine some of the descriptions
+rideshare$weather = rideshare$short_summary
+for(i in 1 : nsamples) {
+  if(rideshare$short_summary[i] %in% c(" Overcast ", " Partly Cloudy ", " Mostly Cloudy ")){
+    rideshare$weather[i] = " Cloudy "
+  } else if (rideshare$short_summary[i] %in% c(" Rain ", " Light Rain ", " Possible Drizzle ", " Drizzle ")) {
+    rideshare$weather[i] = " Rain "
+  } else {
+    rideshare$weather[i] = rideshare$short_summary[i]
+  }
+}
+```
+
+Then select needed predictors, perform train / test split, and save the processed data to result
+```{r, eval=T}
+# select columns
+rideshare = rideshare[c(
+  "distance", "cab_type", 
+  "daycount", "weather", 
+  "source", "destination", "name",
+  "temperature", "humidity", "windSpeed", "visibility", "pressure",
+  "period",
+  "price"
+)]
+
+# take a peek
+head(rideshare, 5)
+
+# train / test split
+shuffled.rideshare = rideshare[sample(1:nrow(rideshare)), ]
+rideshare.train = shuffled.rideshare[1:40000, ]
+rideshare.test = shuffled.rideshare[40001:45984, ]
+
+# save to csv
+write.csv(rideshare.train, "data/rideshare_train.csv", row.names=F)
+write.csv(rideshare.test, "data/rideshare_test.csv", row.names=F)
+```
+
+
