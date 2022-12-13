@@ -17,7 +17,7 @@ In this section we will aim to build a very simple model to analyze the relation
 ```{r, eval=T, cache=T}
 # helper function for calculating RMSE
 RMSE = function(y, yhat) {
-  return (mean((y - yhat) ^ 2))
+  return (sqrt(mean((y - yhat) ^ 2)))
 }
 
 # load data from the pre-processed csv
@@ -224,7 +224,7 @@ lm.all.rmse = data.frame(trainRMSE=lm.all.rmse.train, testRMSE=lm.all.rmse.test)
 lm.all.rmse
 ```
 
-The RMSE is much lower (9.32 for train and 10.04 for test), but still not satisfying, the prediction can have up to 10 dollar error off the real price.
+The RMSE is much lower (3.05 for train and 3.17 for test), but still not satisfying, the prediction can have up to 3 dollar error off the real price.
 
 # Forward Model Selection
 
@@ -246,7 +246,7 @@ lm.full.rmse.test = RMSE(
 lm.full.rmse = data.frame(trainRMSE=lm.full.rmse.train, testRMSE=lm.full.rmse.test)
 lm.full.rmse
 ```
-Both train and test RMSEs are decreased (6.53 for train and 7.73 for test), indicating an improvement in the prediction capability. However, for the purpose of analysis, we also used AIC forward selection:
+Both train and test RMSEs are decreased (2.55 for train and 2.78 for test), indicating an improvement in the prediction capability. However, for the purpose of analysis, we also used AIC forward selection:
 
 ```{r, eval=T, cache=T}
 lm.aic = step(
@@ -272,7 +272,7 @@ lm.aic.rmse = data.frame(trainRMSE=lm.aic.rmse.train, testRMSE=lm.aic.rmse.test)
 lm.aic.rmse
 ```
 
-The train RMSE increases a little bit compared to the full model (6.61), but test RMSE are decreased (7.68), indicating a slight improvement in the overfitting issue. We can see the formula of this forward selection model:
+The train RMSE increases a little bit compared to the full model (2.57), but test RMSE are decreased (2.77), indicating a slight improvement in the overfitting issue. We can see the formula of this forward selection model:
 
 ```{r, eval=T}
 formula(lm.aic)

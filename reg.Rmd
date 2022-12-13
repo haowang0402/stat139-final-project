@@ -1,0 +1,84 @@
+---
+title: "Appendix part V: Regularization"
+output: pdf_document
+---
+
+\newcommand{\noin}{\noindent}    
+\newcommand{\Var}{\text{Var}}    
+\newcommand{\Cov}{\text{Cov}}  
+
+```{r}
+# Easy regularization
+# Ridge model
+rideshare = read.csv("data/rideshare_train.csv")
+rideshare_test = read.csv("data/rideshare_test.csv")
+RMSE = function(y,yhat){
+  SSE = sum((y-yhat)^2)
+  return(sqrt(SSE/length(y)))
+}
+rideshare = read.csv("data/rideshare_train.csv")
+rideshare_test = read.csv("data/rideshare_test.csv")
+    library(glmnet)
+    set.seed(139)
+    colnames = c("price", "distance", "name", "humidity","temperature")
+    rideshare_test = rideshare_test[, colnames]
+    all_model = lm(price ~ (distance + name + humidity + temperature)^2, data=rideshare)
+    X = model.matrix(formula(all_model), data= rideshare)[, -1]
+    X_test = model.matrix(formula(all_model), data= rideshare_test)[, -1]
+    ridges = cv.glmnet(X, rideshare$price,alpha=0, lambda = 2^(seq(1, 15, 0.1)), nfolds=10)
+    ridges$lambda.min
+
+    ridge1 = glmnet(X, rideshare$price, alpha =0, lambda=ridges$lambda.min)
+    result = predict(ridge1, newx = X)
+    result_test = predict(ridge1, newx = X_test)
+    rmse =  RMSE(result,rideshare$price)
+    rmse_test =  RMSE(result_test,rideshare_test$price)
+    print(rmse)
+    print(rmse_test)
+    
+    sampled = sample(nrow(rideshare),100)
+    dummy_df = X[sampled,]
+    plot(price~ distance,data=rideshare,cex=0.8,pch=16,col=rgb(0.5,0.5,0.5,0.3))
+    dummyx = seq(min(rideshare$distance),max(rideshare$distance), 0.5)
+    yhats.ridge=matrix(NA,nrow=nrow(dummy_df),ncol=length(dummyx))
+    for(i in 1:nrow(dummy_df)){
+      rep_df = matrix(0, nrow= length(dummyx), ncol= ncol(dummy_df))
+      for(j in 1:length(dummyx)){
+        rep_df[j, ] = dummy_df[i, ]
+      }
+      colnames(rep_df) <- colnames(dummy_df)
+      rep_df = data.frame(rep_df)
+      rep_df$distance=dummyx
+      yhat.ridge = predict(ridge1,newx=data.matrix(rep_df))
+      lines(yhat.ridge~dummyx,col=rgb(1,0.5,0,0.5),lwd=0.5,lty=2:3)
+      yhats.ridge[i,]=yhat.ridge
+    }
+    coef(ridge1)["distance", ]
+    coef(ridge1)["humidity", ]
+    coef(ridge1)["temperature", ]
+    mean_yhat = apply(yhats.ridge,2,mean)
+    lines(mean_yhat~dummyx,col=rgb(0.5,0.5,0,1),lwd=3)
+```
+
+
+```{r}
+# Lasso Model
+library(glmnet)
+set.seed(139)
+    names = c("price", "distance", "name", "humidity","temperature")
+    rideshare_test = rideshare_test[, names]
+    all_model = lm(price ~ (distance + name + humidity + temperature) ^ 2, data=rideshare)
+    X = model.matrix(formula(all_model), data= rideshare)[, -1]
+    lassos = cv.glmnet(X, rideshare$price, alpha=1, 
+                       lambda = 2^(seq(-15, 15, 0.1)), nfolds=10)
+    lassos$lambda.min
+    lassos = glmnet(X, rideshare$price, alpha =1, lambda=lassos$lambda.min)
+    yhat.train.lassos = predict(lassos, newx= model.matrix(all_model, data=rideshare)[, -1])
+    yhat.test.lassos = predict(lassos, newx= model.matrix(all_model, data=rideshare_test)[, -1])
+    RMSE.lassos.train = RMSE(rideshare$price, yhat.train.lassos)
+    RMSE.lassos.test = RMSE(rideshare_test$price, yhat.test.lassos)
+    
+    RMSE.lassos.train 
+    RMSE.lassos.test
+    RMSE.lassos.test - RMSE.lassos.train
+```
