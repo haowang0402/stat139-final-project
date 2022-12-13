@@ -1,0 +1,11 @@
+---
+title: "EDA Part 2 Feiyang Huang"
+output: html_document
+date: "2022-11-22"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+

@@ -1,0 +1,130 @@
+---
+title: "Appendix Part IV: Tree and Random Forest"
+output: pdf_document
+---
+
+# Introduction
+
+In this section, we will use the processed data to explore decision trees and random forests to build predictive models. 
+
+This appendix will correspond to section 4.5 in the final report.
+
+# Decision Trees
+```{r, eval=T}
+#loading libraries
+library(rpart)
+library(randomForest)
+library(caret)
+
+# helper function for calculating RMSE
+RMSE = function(y, yhat) {
+  return (mean((y - yhat) ^ 2))
+}
+
+# load data from the pre-processed csv
+rideshare.train = read.csv("data/rideshare_train.csv")
+rideshare.test = read.csv("data/rideshare_test.csv")
+```
+
+Based on our previous data analysis for the linear models, we know that **distance**, **name**, **destination**, and **source** are the significant factors in terms of predictions for the price. 
+
+Therefore, we'd like to tree the same features but with decision tree.
+
+```{r,eval = T}
+tree1 = rpart(price ~ distance + name + destination + source, data = rideshare.train,
+              control=list(maxdepth = 50, minbucket = 2, cp = 0))
+price.tree1.train = predict(tree1)
+price.tree1.test = predict(tree1, new=rideshare.test)
+rmse.tree1.train = RMSE(rideshare.train$price,price.tree1.train)
+rmse.tree1.test = RMSE(rideshare.test$price,price.tree1.test)
+c(rmse.tree1.train, rmse.tree1.test)
+```
+
+As we can see, the testing RMSE is larger than our training RMSE, which shows that the decision tree model is overfitting. It might be overfitting because of our low cp value. 
+
+We want to fine tune the cp value to get the best RMSE score we can achieve with the decision tree model.
+```{r, eval = T}
+best.rmse.test = sd(rideshare.test$price)
+cps = seq(0,0.02,0.0002)
+for(i in 1:length(cps)){
+  cp = cps[i]
+  tree2 = rpart(price ~ distance + name + destination + source, data = rideshare.train,
+              control=list(maxdepth = 50, minbucket = 2, cp = cp))
+  price.tree2.train = predict(tree2)
+  price.tree2.test = predict(tree2, new=rideshare.test)
+  rmse.tree2.train = RMSE(rideshare.train$price,price.tree2.train)
+  rmse.tree2.test = RMSE(rideshare.test$price,price.tree2.test)
+  if(rmse.tree2.test < best.rmse.test){
+    best.rmse.test = rmse.tree2.test
+    best.rmse.train = rmse.tree2.train
+    best.cp = cp
+    best.tree2 = tree2
+  }
+}
+c(best.rmse.train, best.rmse.test)
+```
+
+Even though the test rmse for the fune-tuning tree is lower than that of **tree1**, the test rmse is still higher than the test rmse of the best linear model we had. 
+
+Since **tree1** is already overfitting, we should not consider adding more features or try the full model 
+
+It's quite interesting to see that the **name** variable has the highest variable importance among all the variables. 
+```{r, eval = T}
+barplot(tree1$variable.importance,horiz=T, las=2,cex.names=0.8)
+```
+
+Decision trees are not very robust, which might contribute to the overfitting, so we'd like to train a random forest.
+
+
+# Random Forest
+
+For the random forest model, we tried a random forest model with all the features. Since random forest models should pick up the interaction relationship automatically, there is no need for us to speicify the interaction terms. 
+
+```{r, eval = T}
+set.seed(139)
+maxnodes.vec=c(200,500, 700, 1000)
+mtry.vec = c(3, 6, 9, 12)
+par.grid=expand.grid(maxnodes=maxnodes.vec,mtry=mtry.vec)
+treegrowth = 50
+num.growths = 5
+rf.list = vector("list",nrow(par.grid))
+yhats.list = vector("list",nrow(par.grid))
+for(i in 1:nrow(par.grid)){
+  yhats.list[[i]] = matrix(NA,nrow=length(rideshare.test$price),ncol=num.growths)
+  model = randomForest(price~. ,data=rideshare.train, maxnodes=par.grid$maxnodes[i],
+  mtry=par.grid$mtry[i],ntree=treegrowth)
+  rf.list[[i]] = model
+  yhats = predict(model,new=rideshare.test)
+  yhats.list[[i]][,1] <- yhats
+}
+for(j in 2:num.growths){
+  for(i in 1:nrow(par.grid)){
+    model = grow(rf.list[[i]],treegrowth)
+    rf.list[[i]] = model
+    yhats = predict(model,new=rideshare.test)
+    yhats.list[[i]][,j] <- yhats
+  }
+}
+# calculate RMSEs
+rmse.matrix = matrix(NA,nrow=nrow(par.grid),ncol=num.growths)
+for(i in 1:nrow(par.grid)){
+yhats = yhats.list[[i]]
+rmse.matrix[i,] = RMSE(yhats, rideshare.test$price)
+}
+matplot(treegrowth*(1:num.growths),t(rmse.matrix),type="l")
+legend("topright",legend=paste((par.grid)[,1],(par.grid)[,2]),col=1:6, lty=1:5, cex=0.8)
+```
+```{r, eval = T}
+best.rf = rf.list[which.min(rmse.matrix)][[1]]
+price.train = predict(best.rf)
+c(RMSE(price.train, rideshare.train$price), rmse.matrix[which.min(rmse.matrix)])
+```
+
+Based on the result, we can see that the number of trees does not influence the test rmse that much. However,the number of factors at each node and the max number of nodes matter a lot. 
+
+```{r, eval = T}
+varImpPlot(best.rf)
+```
+
+The best rmse of the random forest is better than that of decision trees. However, it's still not as good as the selected linear model. 
+Maybe the pricing model is closer to a linear model and the ols model generates the unbiased estimator, so it achieves the best test rmse. 
